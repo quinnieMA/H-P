@@ -25,16 +25,42 @@ warnings.filterwarnings('ignore')
 # ========================
 # Path Configuration
 # ========================
+from global_options import DataPaths, BASE_DIR, AnalysisOptions
+warnings.filterwarnings('ignore')
+
+# ========================
+# Path Configuration
+# ========================
+
+# 继承 global_option 的配置，统一使用 DataPaths 和 BASE_DIR 管理路径
 class DataPaths:
+    # 保持 global_option 原有路径配置（此处省略重复代码，实际使用时需确保继承全局配置）
+    # 以下仅展示目标代码的路径修改（基于全局 BASE_DIR 和已有目录结构）
+    
+    # Target overviews（基于全局 BASE_DIR 和 processed 目录，复用已有路径定义）
+    TARGET_FOLDER = DataPaths.TRIGRAM_DIR  # 直接复用全局定义的 trigram 目录（无需重复写完整路径）
+    TARGET_IDS = DataPaths.DOC_IDS         # 直接复用全局定义的文档ID文件（修复原路径拼写错误：tar_description → tar_trade_description）
+    
+    # Output（基于全局 BASE_DIR 定义输出目录，保持原功能路径）
+    OUTPUT_FOLDER = BASE_DIR.parent/ "HP_results_description"  # 从根目录向上两级拼接输出目录
+    # 或保持原绝对路径风格（如果需要固定位置）：
+    # OUTPUT_FOLDER = Path("D:/OneDrive/MA/acquisition/HP_results_trade_description")
+    
+    # 输出文件路径（使用 Path 类的 / 运算符，比 os.path.join 更简洁规范）
+    TARGET_SIMILARITY = OUTPUT_FOLDER / "target_similarity_scores_hp.csv"
+    TARGET_TOP10_NEIGHBORS = OUTPUT_FOLDER / "target_top10_neighbors_hp.csv"
+    TARGET_SIMILARITY_MATRIX = OUTPUT_FOLDER / "target_similarity_matrix_hp.npy"
+
+#class DataPaths:
     # Target overviews
-    TARGET_FOLDER = "D:/OneDrive/MA/acquisition/NLP_tar_description/processed-0/trigram"
-    TARGET_IDS = "D:/OneDrive/MA/acquisition/NLP_tar_description/processed-0/document_ids.txt"
+    #TARGET_FOLDER = "D:/OneDrive/MA/acquisition/NLP_tar_description/processed-0/trigram"
+    #TARGET_IDS = "D:/OneDrive/MA/acquisition/NLP_tar_description/processed-0/document_ids.txt"
     
     # Output
-    OUTPUT_FOLDER = "D:/OneDrive/MA/acquisition/HP_results"
-    TARGET_SIMILARITY = os.path.join(OUTPUT_FOLDER, "target_similarity_scores_hp.csv")
-    TARGET_TOP10_NEIGHBORS = os.path.join(OUTPUT_FOLDER, "target_top10_neighbors_hp.csv")
-    TARGET_SIMILARITY_MATRIX = os.path.join(OUTPUT_FOLDER, "target_similarity_matrix_hp.npy")
+    #OUTPUT_FOLDER = "D:/OneDrive/MA/acquisition/HP_results"
+    #TARGET_SIMILARITY = os.path.join(OUTPUT_FOLDER, "target_similarity_scores_hp.csv")
+    #TARGET_TOP10_NEIGHBORS = os.path.join(OUTPUT_FOLDER, "target_top10_neighbors_hp.csv")
+    #TARGET_SIMILARITY_MATRIX = os.path.join(OUTPUT_FOLDER, "target_similarity_matrix_hp.npy")
 
 # ========================
 # Text Processing Utilities
@@ -102,9 +128,9 @@ def calculate_hp_similarity(texts_dict, year):
         # Step 1: Create binary bag-of-words representation
         # HP方法使用二进制向量，表示词汇是否存在
         vectorizer = CountVectorizer(
-            max_features=10000,  # HP方法通常使用更多特征
-            min_df=1,           # HP方法不过滤罕见词
-            max_df=1.0,         # 不过滤常见词
+            max_features=5000,  # HP方法通常使用更多特征
+            min_df=2,           # HP方法不过滤罕见词
+            max_df=0.8,         # 不过滤常见词
             binary=True,        # 关键：使用二进制表示
             ngram_range=(1, 2), # HP方法使用1-2grams
             stop_words='english'
@@ -124,7 +150,7 @@ def calculate_hp_similarity(texts_dict, year):
         
         # Step 3: 可选 - 应用阈值（HP方法常用）
         # 只保留显著的正相似度，将低相似度设为0
-        similarity_threshold = 0.01  # 可根据数据调整
+        similarity_threshold = 0.05  # 可根据数据调整
         similarity_matrix[similarity_matrix < similarity_threshold] = 0
         
         print(f"Year {year}: Similarity matrix calculated, shape: {similarity_matrix.shape}")
@@ -141,10 +167,10 @@ def create_industry_network(similarity_matrix, doc_ids, threshold=0.1):
     创建产业关联网络（HP方法的核心输出）
     """
     network_edges = []
-    
+    effective_threshold = max(threshold, 0.08)
     for i in range(len(doc_ids)):
         for j in range(i+1, len(doc_ids)):
-            if similarity_matrix[i, j] >= threshold:
+            if similarity_matrix[i, j] >= effective_threshold:
                 network_edges.append({
                     'source': doc_ids[i],
                     'target': doc_ids[j],
