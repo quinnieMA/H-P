@@ -1,0 +1,31 @@
+{
+  "args": {
+    "algorithm": "pv_dbow",
+    "vector_size": 300,
+    "window": 15,
+    "epochs": 40,
+    "min_count": 3,
+    "alpha": 0.025,
+    "min_alpha": 0.0001,
+    "hs": 1,
+    "negative": 5,
+    "workers": 4,
+    "top_k": 10
+  },
+  "model_kwargs": {
+    "vector_size": 300,
+    "alpha": 0.025,
+    "min_alpha": 0.0001,
+    "min_count": 3,
+    "dm": 0,
+    "window": 15,
+    "dbow_words": 1,
+    "hs": 1,
+    "sample": 1e-05,
+    "negative": 5,
+    "ns_exponent": 0.75,
+    "workers": 4
+  },
+  "data_dir": "D:\\OneDrive\\MA\\acquisition\\NLP_tar_overview\\processed\\trigram",
+  "timestamp": "20251209_125611"
+}
